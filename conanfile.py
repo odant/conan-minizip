@@ -53,38 +53,12 @@ class minizipConan(ConanFile):
         cmake.install()
 
     def package(self):
-        return
-        # CMake scripts
-        self.copy("FindGTest.cmake", dst=".", src=".", keep_path=False)
-        self.copy("FindGMock.cmake", dst=".", src=".", keep_path=False)
-        # Headers
-        self.copy("*.h", dst="include", src="src/googletest/include", keep_path=True)
-        self.copy("*.h", dst="include", src="src/googlemock/include", keep_path=True)
-        # Libraries
-        self.copy("*.a", dst="lib", keep_path=False)
-        self.copy("*.lib", dst="lib", keep_path=False)
         # PDB
-        self.copy("*gtest.pdb", dst="bin", keep_path=False)
-        self.copy("*gmock.pdb", dst="bin", keep_path=False)
-        self.copy("*gtest_main.pdb", dst="bin", keep_path=False)
-        self.copy("*gmock_main.pdb", dst="bin", keep_path=False)
-        self.copy("*gtestd.pdb", dst="bin", keep_path=False)
-        self.copy("*gmockd.pdb", dst="bin", keep_path=False)
-        self.copy("*gtest_maind.pdb", dst="bin", keep_path=False)
-        self.copy("*gmock_maind.pdb", dst="bin", keep_path=False)
+        self.copy("minizip.pdb", dst="bin", src="lib", keep_path=False)
 
     def package_id(self):
         self.info.options.with_unit_tests = "any"
 
     def package_info(self):
-        return
-        self.cpp_info.libs = ["gmock_main"] if self.settings.build_type == "Release" else ["gmock_maind"]
-        self.cpp_info.defines = ["GTEST_LANG_CXX11"]
-        #
-        if self.settings.os == "Linux":
-            if self.settings.build_type == "Release":
-                self.cpp_info.libs.extend(["gmock", "gtest"])
-            else:
-                self.cpp_info.libs.extend(["gmockd", "gtestd"])
-            self.cpp_info.libs.append("pthread")
+        self.cpp_info.libs = ["minizip"]
 
