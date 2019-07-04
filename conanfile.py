@@ -7,7 +7,7 @@ from conans import ConanFile, CMake
 
 class minizipConan(ConanFile):
     name = "minizip"
-    version = "2.8.8"
+    version = "2.8.9"
     license = "ZLIB http://www.zlib.net/zlib_license.html"
     description = "minizip is a zip manipulation library written in C that is supported on Windows, macOS, and Linux."
     url = "https://github.com/odant/conan-minizip"
