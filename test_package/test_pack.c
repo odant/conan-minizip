@@ -57,7 +57,7 @@ const char text_c[] = ""
 ;
 
 
-int32_t minizip_add_entry_cb(void *handle, void *userdata, mz_zip_file *file_info) {
+int32_t minizip_add_entry_cb(void* handle, void* userdata, mz_zip_file* file_info) {
     MZ_UNUSED(handle);
     MZ_UNUSED(userdata);
 
@@ -67,7 +67,7 @@ int32_t minizip_add_entry_cb(void *handle, void *userdata, mz_zip_file *file_inf
     return MZ_OK;
 }
 
-int32_t minizip_add_progress_cb(void *handle, void *userdata, mz_zip_file *file_info, int64_t position) {
+int32_t minizip_add_progress_cb(void* handle, void* userdata, mz_zip_file* file_info, int64_t position) {
     MZ_UNUSED(userdata);
 
     double progress = 0;
