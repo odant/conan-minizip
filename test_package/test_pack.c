@@ -57,6 +57,37 @@ const char text_c[] = ""
 ;
 
 
+int32_t minizip_add_entry_cb(void *handle, void *userdata, mz_zip_file *file_info) {
+    MZ_UNUSED(handle);
+    MZ_UNUSED(userdata);
+
+    printf("minizip_add_entry_cb: ");
+    /* Print the current file we are trying to compress */
+    printf("Adding %s\n", file_info->filename);
+    return MZ_OK;
+}
+
+int32_t minizip_add_progress_cb(void *handle, void *userdata, mz_zip_file *file_info, int64_t position) {
+    MZ_UNUSED(userdata);
+
+    double progress = 0;
+    uint8_t raw = 0;
+
+    mz_zip_writer_get_raw(handle, &raw);
+
+    if (raw && file_info->compressed_size > 0) {
+        progress = ((double)position / file_info->compressed_size) * 100;
+    } else if (!raw && file_info->uncompressed_size > 0) {
+        progress = ((double)position / file_info->uncompressed_size) * 100;
+    }
+
+    printf("minizip_add_progress_cb: ");
+    /* Print the progress of the current compress operation */
+    printf("%s - %"PRId64" / %"PRId64" (%.02f%%)\n", file_info->filename, position, file_info->uncompressed_size, progress);
+    return MZ_OK;
+}
+
+
 int main() {
 
 /* Prepare */
@@ -114,6 +145,9 @@ int main() {
     mz_zip_writer_create(&writer);
     mz_zip_writer_set_compress_method(writer, MZ_COMPRESS_METHOD_DEFLATE);
     mz_zip_writer_set_compress_level(writer, MZ_COMPRESS_LEVEL_BEST);
+
+    mz_zip_writer_set_progress_cb(writer, NULL, minizip_add_progress_cb);
+    mz_zip_writer_set_entry_cb(writer, NULL, minizip_add_entry_cb);
 
     err = mz_zip_writer_open_file(writer, "archive.zip", 0, 0);
     if (err != MZ_OK) {
