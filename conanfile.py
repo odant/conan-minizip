@@ -23,7 +23,7 @@ class minizipConan(ConanFile):
     }
     default_options = "with_unit_tests=False"
     generators = "cmake"
-    exports_sources = "src/*", "CMakeLists.txt", "FindMINIZIP.cmake"
+    exports_sources = "src/*", "CMakeLists.txt", "FindMINIZIP.cmake", "remove_libbsd_iconv.patch"
     no_copy_source = True
     build_policy = "missing"
 
@@ -33,6 +33,9 @@ class minizipConan(ConanFile):
 
     def requirements(self):
         self.requires("zlib/1.2.11@%s/stable" % self.user)
+
+    def source(self):
+        tools.patch(patch_file="remove_libbsd_iconv.patch")
 
     def build(self):
         build_type = "RelWithDebInfo" if self.settings.build_type == "Release" else "Debug"

@@ -1,0 +1,33 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 0a369fc..49052e7 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -287,28 +287,8 @@ if(UNIX)
+             endif()
+         endif()
+ 
+-        if(NOT HAVE_ARC4RANDOM_BUF)
+-            find_package(PkgConfig REQUIRED)
+-
+-            pkg_check_modules(LIBBSD libbsd)
+-            if (LIBBSD_FOUND)
+-                check_library_exists("${LIBBSD_LIBRARIES}" "arc4random_buf"
+-                    "${LIBBSD_LIBRARY_DIRS}" HAVE_LIBBSD_ARC4RANDOM_BUF)
+-                if (HAVE_LIBBSD_ARC4RANDOM_BUF)
+-                    add_definitions(-DHAVE_LIBBSD)
+-                    add_definitions(-DHAVE_ARC4RANDOM_BUF)
+-                    include_directories(${LIBBSD_INCLUDE_DIRS})
+-                    link_directories(${LIBBSD_LIBRARY_DIRS})
+-                endif()
+-            endif()
+-        endif()
+     endif()
+ 
+-    find_package(Iconv QUIET)
+-    if (Iconv_FOUND)
+-        message(STATUS "Using Iconv")
+-        include_directories(${Iconv_INCLUDE_DIRS})
+-    endif()
+ endif()
+ 
+ # Include compatibility layer
