@@ -67,3 +67,4 @@ class minizipConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["minizip"]
+        self.cpp_info.defines = ["HAVE_STDINT_H", "HAVE_INTTYPES_H"]
