@@ -19,6 +19,11 @@
 #include <direct.h>
 #endif
 
+#ifdef __unix__
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
 
 int32_t minizip_extract_entry_cb(void* handle, void* userdata, mz_zip_file* file_info, const char* path) {
     MZ_UNUSED(handle);
@@ -67,6 +72,9 @@ int main(void) {
 
 #ifdef _WIN32
     res = _mkdir("output_folder");
+#endif
+#ifdef __unix__
+    res = mkdir("output_folder", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
     if (res != 0 && res != EEXIST) {
         printf("Can`t create folder 'output_folder'!\n");

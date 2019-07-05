@@ -18,6 +18,11 @@
 #include <direct.h>
 #endif
 
+#ifdef __unix__
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
 
 const char text_a[] = ""
 "Why end might ask civil again spoil. She dinner she our horses depend. Remember at children by reserved to vicinity. In affronting unreserved delightful simplicity ye. Law own advantage furniture continual sweetness bed agreeable perpetual. Oh song well four only head busy it. Afford son she had lively living. Tastes lovers myself too formal season our valley boy. Lived it their their walls might to by young.\n"
@@ -96,12 +101,18 @@ int main(void) {
 #ifdef _WIN32
     res = _mkdir("input_folder");
 #endif
+#ifdef __unix__
+    res = mkdir("input_folder", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
     if (res != 0 && res != EEXIST) {
         printf("Can`t create folder 'input_folder'!\n");
         return EXIT_FAILURE;
     }
 #ifdef _WIN32
     res = _mkdir("input_folder/dir");
+#endif
+#ifdef __unix__
+    res = mkdir("input_folder/dir", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 #endif
     if (res != 0 && res != EEXIST) {
         printf("Can`t create folder 'input_folder/dir'!\n");
