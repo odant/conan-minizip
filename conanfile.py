@@ -40,7 +40,7 @@ class minizipConan(ConanFile):
         cmake.verbose = True
         cmake.definitions["BUILD_SHARED_LIBS:BOOL"] = "OFF"
         #
-        cmake.definitions["MZ_COMPAT"] = "OFF"
+        cmake.definitions["MZ_COMPAT"] = "ON"
         cmake.definitions["MZ_BZIP2"] = "OFF"
         cmake.definitions["SKIP_INSTALL_FILES:BOOL"] = "ON"
         cmake.definitions["SKIP_INSTALL_BINARIES:BOOL"] = "ON"
