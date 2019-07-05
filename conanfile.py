@@ -59,7 +59,7 @@ class minizipConan(ConanFile):
 
     def package(self):
         # PDB
-        self.copy("minizip.pdb", dst="bin", src="lib", keep_path=False)
+        self.copy("*minizip.pdb", dst="bin", src="src", keep_path=False)
         # Clean
         tools.rmdir(os.path.join(self.package_folder, "lib", "cmake"))
 
