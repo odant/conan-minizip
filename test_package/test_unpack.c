@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -202,3 +203,4 @@ int main(void) {
     printf("Content equal, OK\n");
     return EXIT_SUCCESS;
 }
+
