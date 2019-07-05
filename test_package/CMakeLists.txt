@@ -30,3 +30,17 @@ add_test(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
     COMMAND test_pack_CONAN_PKG
 )
+
+add_executable(test_list_CONAN_PKG test_list.c)
+target_link_libraries(test_list_CONAN_PKG CONAN_PKG::minizip)
+set_target_properties(test_list_CONAN_PKG
+    PROPERTIES
+    INSTALL_RPATH "$ORIGIN"
+    BUILD_WITH_INSTALL_RPATH True
+)
+add_test(
+    NAME test_list_CONAN_PKG
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    COMMAND test_list_CONAN_PKG
+)
+set_tests_properties(test_list_CONAN_PKG PROPERTIES DEPENDS test_pack_CONAN_PKG)

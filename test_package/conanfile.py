@@ -13,7 +13,7 @@ class PackageTestConan(ConanFile):
         self.copy("*.pdb", dst="bin", src="bin")
 
     def build(self):
-        cmake = CMake(self)
+        cmake = CMake(self, msbuild_verbosity='normal')
         cmake.verbose = True
         cmake.configure()
         cmake.build()

@@ -88,7 +88,7 @@ int32_t minizip_add_progress_cb(void *handle, void *userdata, mz_zip_file *file_
 }
 
 
-int main() {
+int main(void) {
 
 /* Prepare */
     int res = 0;
