@@ -23,7 +23,7 @@ class minizipConan(ConanFile):
     }
     default_options = "with_unit_tests=False"
     generators = "cmake"
-    exports_sources = "src/*", "CMakeLists.txt"
+    exports_sources = "src/*", "CMakeLists.txt", "FindMINIZIP.cmake"
     no_copy_source = True
     build_policy = "missing"
 
@@ -58,9 +58,8 @@ class minizipConan(ConanFile):
         cmake.install()
 
     def package(self):
-        # PDB
+        self.copy("FindMINIZIP.cmake", dst=".", src=".")
         self.copy("*minizip.pdb", dst="bin", src="src", keep_path=False)
-        # Clean
         tools.rmdir(os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_id(self):
