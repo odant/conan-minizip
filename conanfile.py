@@ -2,7 +2,8 @@
 # Dmitriy Vetutnev, Odant 2019
 
 
-from conans import ConanFile, CMake
+from conans import ConanFile, CMake, tools
+import os
 
 
 class minizipConan(ConanFile):
@@ -41,8 +42,10 @@ class minizipConan(ConanFile):
         #
         cmake.definitions["MZ_COMPAT"] = "OFF"
         cmake.definitions["MZ_BZIP2"] = "OFF"
-        cmake.definitions["MZ_BUILD_TEST"] = "ON"
+        cmake.definitions["SKIP_INSTALL_FILES:BOOL"] = "ON"
+        cmake.definitions["SKIP_INSTALL_BINARIES:BOOL"] = "ON"
         if self.options.with_unit_tests:
+            cmake.definitions["MZ_BUILD_TEST"] = "ON"
             cmake.definitions["MZ_BUILD_UNIT_TEST"] = "ON"
             cmake.definitions["MZ_BUILD_FUZZ_TEST"] = "ON"
         cmake.configure()
@@ -57,10 +60,11 @@ class minizipConan(ConanFile):
     def package(self):
         # PDB
         self.copy("minizip.pdb", dst="bin", src="lib", keep_path=False)
+        # Clean
+        tools.rmdir(os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_id(self):
         self.info.options.with_unit_tests = "any"
 
     def package_info(self):
         self.cpp_info.libs = ["minizip"]
-
