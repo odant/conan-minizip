@@ -37,6 +37,8 @@ class minizipConan(ConanFile):
         build_type = "RelWithDebInfo" if self.settings.build_type == "Release" else "Debug"
         cmake = CMake(self, build_type=build_type, msbuild_verbosity='normal')
         cmake.verbose = True
+        cmake.definitions["BUILD_SHARED_LIBS:BOOL"] = "OFF"
+        #
         cmake.definitions["MZ_COMPAT"] = "OFF"
         cmake.definitions["MZ_BZIP2"] = "OFF"
         cmake.definitions["MZ_BUILD_TEST"] = "ON"
