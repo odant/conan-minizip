@@ -51,8 +51,8 @@ class minizipConan(ConanFile):
         cmake.configure()
         cmake.build()
         if self.options.with_unit_tests:
-            if self.settings.os == "Windows":
-                self.run("ctest --output-on-failure --build-config %s" % self.settings.build_type)
+            if cmake.is_multi_configuration:
+                self.run("ctest --output-on-failure --build-config %s" % build_type)
             else:
                 self.run("ctest --output-on-failure")
         cmake.install()
