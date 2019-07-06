@@ -2,7 +2,7 @@
 # Dmitriy Vetutnev, Odant 2019
 
 
-project(PackageTest C)
+project(PackageTest C CXX)
 cmake_minimum_required(VERSION 3.0)
 
 
@@ -57,3 +57,18 @@ add_test(
     COMMAND test_unpack
 )
 set_tests_properties(test_unpack PROPERTIES DEPENDS test_pack)
+
+if(WIN32)
+    add_executable(test_utf8 test_utf8.cpp)
+    target_link_libraries(test_utf8 MINIZIP::minizip)
+    set_target_properties(test_utf8
+        PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+        BUILD_WITH_INSTALL_RPATH True
+    )
+    add_test(
+        NAME test_utf8
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+        COMMAND test_utf8
+    )
+endif()
