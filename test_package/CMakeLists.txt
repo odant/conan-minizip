@@ -15,7 +15,7 @@ endif()
 
 enable_testing()
 
-find_package(MINIZIP REQUIRED)
+find_package(minizip REQUIRED)
 
 add_executable(test_pack test_pack.c)
 target_link_libraries(test_pack MINIZIP::minizip)
