@@ -62,25 +62,25 @@ int main(int, char**) {
     std::cout << "Create archive..." << std::endl;
     int32_t err = MZ_OK;
     void* writer = nullptr;
-    mz_zip_writer_create(&writer);
-    mz_zip_writer_set_compress_method(writer, MZ_COMPRESS_METHOD_DEFLATE);
-    mz_zip_writer_set_compress_level(writer, MZ_COMPRESS_LEVEL_BEST);
-    err = mz_zip_writer_open_file(writer, archiveNameUTF8.c_str(), 0, 0);
+    ::mz_zip_writer_create(&writer);
+    ::mz_zip_writer_set_compress_method(writer, MZ_COMPRESS_METHOD_DEFLATE);
+    ::mz_zip_writer_set_compress_level(writer, MZ_COMPRESS_LEVEL_BEST);
+    err = ::mz_zip_writer_open_file(writer, archiveNameUTF8.c_str(), 0, 0);
     if (err != MZ_OK) {
         std::cout << "Failed 'mz_zip_writer_open_file()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    err = mz_zip_writer_add_path(writer, fileNameUTF8.c_str(), nullptr, 0, 1);
+    err = ::mz_zip_writer_add_path(writer, fileNameUTF8.c_str(), nullptr, 0, 1);
     if (err != MZ_OK) {
         std::cout << "Failed 'mz_zip_writer_add_path()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    err = mz_zip_writer_close(writer);
+    err = ::mz_zip_writer_close(writer);
     if (err != MZ_OK) {
         std::cout << "Failed 'mz_zip_writer_close()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    mz_zip_writer_delete(&writer);
+    ::mz_zip_writer_delete(&writer);
 
     std::cout << "Check exists archive..." << std::endl;
     if (::GetFileAttributesW(archiveNameUTF16.c_str()) == INVALID_FILE_ATTRIBUTES) {
@@ -96,23 +96,23 @@ int main(int, char**) {
 
     std::cout << "Unpack archive..." << std::endl;
     void* reader = nullptr;
-    mz_zip_reader_create(&reader);
-    err = mz_zip_reader_open_file(reader, archiveNameUTF8.c_str());
+    ::mz_zip_reader_create(&reader);
+    err = ::mz_zip_reader_open_file(reader, archiveNameUTF8.c_str());
     if (err != MZ_OK) {
         std::cout << "Failed 'mz_zip_reader_open_file()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    err = mz_zip_reader_save_all(reader, ".");
+    err = ::mz_zip_reader_save_all(reader, ".");
     if (err != MZ_OK) {
         std::cout << "Failed 'mz_zip_reader_save_all()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    err = mz_zip_reader_close(reader);
+    err = ::mz_zip_reader_close(reader);
     if (err != MZ_OK) {
         std::cout << "Failed 'mz_zip_reader_close()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    mz_zip_reader_delete(&reader);
+    ::mz_zip_reader_delete(&reader);
 
     std::cout << "Archive unpacked, check exists file..." << std::endl;
     if (::GetFileAttributesW(fileNameUTF16.c_str()) == INVALID_FILE_ATTRIBUTES) {
