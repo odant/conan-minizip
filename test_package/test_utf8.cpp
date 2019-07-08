@@ -107,18 +107,36 @@ int main(int, char**) {
         std::cout << "Failed 'mz_zip_reader_save_all()', err: " << err << std::endl;
         return EXIT_FAILURE;
     }
-    err = ::mz_zip_reader_close(reader);
-    if (err != MZ_OK) {
-        std::cout << "Failed 'mz_zip_reader_close()', err: " << err << std::endl;
-        return EXIT_FAILURE;
-    }
-    ::mz_zip_reader_delete(&reader);
 
     std::cout << "Archive unpacked, check exists file..." << std::endl;
     if (::GetFileAttributesW(fileNameUTF16.c_str()) == INVALID_FILE_ATTRIBUTES) {
         std::cout << "File not exists!" << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::cout << "File exists, check name in archive..." << std::endl;
+    err = ::mz_zip_reader_goto_first_entry(reader);
+    if (err != MZ_OK) {
+        std::cout << "Failed 'mz_zip_reader_goto_first_entry()', err: " << err << std::endl;
+        return EXIT_FAILURE;
+    }
+    mz_zip_file* fileInfo = nullptr;
+    err = ::mz_zip_reader_entry_get_info(reader, &fileInfo);
+    if (err != MZ_OK) {
+        std::cout << "Failed 'mz_zip_reader_entry_get_info()', err: " << err << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (fileInfo->filename != fileNameUTF8) {
+        std::cout << "Filename in archive not equal fileNameUTF8!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    err = ::mz_zip_reader_close(reader);
+    if (err != MZ_OK) {
+        std::cout << "Failed 'mz_zip_reader_close()', err: " << err << std::endl;
+        return EXIT_FAILURE;
+    }
+    ::mz_zip_reader_delete(&reader);
 
     std::cout << "Ok" << std::endl;
     return EXIT_SUCCESS;
