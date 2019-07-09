@@ -3,7 +3,6 @@
 
 
 import platform, os
-from copy import deepcopy
 from conan.packager import ConanMultiPackager
 
 
@@ -18,7 +17,6 @@ with_unit_tests = True if "WITH_UNIT_TESTS" in os.environ else False
 def add_with_unit_tests(builds):
     result = []
     for settings, options, env_vars, build_requires, reference in builds:
-        options = deepcopy(options)
         options["minizip:with_unit_tests"] = with_unit_tests
         result.append([settings, options, env_vars, build_requires, reference])
     return result
