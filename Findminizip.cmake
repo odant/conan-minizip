@@ -35,7 +35,7 @@ if(MINIZIP_FOUND)
     set(MINIZIP_INCLUDE_DIRS ${MINIZIP_INCLUDE_DIR})
     set(MINIZIP_LIBRARIES ${MINIZIP_LIBRARY})
     mark_as_advanced(MINIZIP_INCLUDE_DIR MINIZIP_LIBRARY)
-    set(MINIZIP_DEFINITIONS ${CONAN_COMPILE_DEFINITIONS_NGHTTP2}) # Add defines from package_info
+    set(MINIZIP_DEFINITIONS ${CONAN_COMPILE_DEFINITIONS_MINIZIP}) # Add defines from package_info
 
     include(CMakeFindDependencyMacro)
     find_dependency(ZLIB)
@@ -47,11 +47,5 @@ if(MINIZIP_FOUND)
             IMPORTED_LOCATION ${MINIZIP_LIBRARY}
             INTERFACE_LINK_LIBRARIES ZLIB::ZLIB
         )
-        if (MINIZIP_DEFINITIONS)
-            set_property(TARGET MINIZIP::minizip
-                APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS ${MINIZIP_DEFINITIONS}
-            )
-        endif()
-
     endif()
 endif()
