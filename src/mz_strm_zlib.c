@@ -1,8 +1,8 @@
 /* mz_strm_zlib.c -- Stream for zlib inflate/deflate
-   Version 2.8.9, July 4, 2019
+   Version 2.9.2, February 12, 2020
    part of the MiniZip project
 
-   Copyright (C) 2010-2019 Nathan Moinvaziri
+   Copyright (C) 2010-2020 Nathan Moinvaziri
       https://github.com/nmoinvaz/minizip
 
    This program is distributed under the terms of the same license as zlib.
@@ -15,7 +15,7 @@
 #include "mz_strm_zlib.h"
 
 #include "zlib.h"
-#if defined(ZLIBNG_VERNUM)
+#if defined(ZLIBNG_VERNUM) && !defined(ZLIB_COMPAT)
 #  include "zlib-ng.h"
 #endif
 
@@ -168,8 +168,6 @@ int32_t mz_stream_zlib_read(void *stream, void *buf, int32_t size)
 
             if (read < 0)
                 return read;
-            if (read == 0)
-                break;
 
             zlib->zstream.next_in = zlib->buffer;
             zlib->zstream.avail_in = read;

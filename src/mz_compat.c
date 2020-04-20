@@ -1,8 +1,8 @@
 /* mz_compat.c -- Backwards compatible interface for older versions
-   Version 2.8.9, July 4, 2019
+   Version 2.9.2, February 12, 2020
    part of the MiniZip project
 
-   Copyright (C) 2010-2019 Nathan Moinvaziri
+   Copyright (C) 2010-2020 Nathan Moinvaziri
      https://github.com/nmoinvaz/minizip
    Copyright (C) 1998-2010 Gilles Vollant
      https://www.winimage.com/zLibDll/minizip.html
@@ -48,7 +48,7 @@ static int32_t zipConvertAppendToStreamMode(int append)
         mode |= MZ_OPEN_MODE_CREATE | MZ_OPEN_MODE_APPEND;
         break;
     case APPEND_STATUS_ADDINZIP:
-        mode |= MZ_OPEN_MODE_READ;
+        mode |= MZ_OPEN_MODE_READ | MZ_OPEN_MODE_APPEND;
         break;
     }
     return mode;

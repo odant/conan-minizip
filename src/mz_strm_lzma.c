@@ -1,8 +1,8 @@
 /* mz_strm_lzma.c -- Stream for lzma inflate/deflate
-   Version 2.8.9, July 4, 2019
+   Version 2.9.2, February 12, 2020
    part of the MiniZip project
 
-   Copyright (C) 2010-2019 Nathan Moinvaziri
+   Copyright (C) 2010-2020 Nathan Moinvaziri
       https://github.com/nmoinvaz/minizip
 
    This program is distributed under the terms of the same license as lzma.
@@ -183,8 +183,6 @@ int32_t mz_stream_lzma_read(void *stream, void *buf, int32_t size)
 
             if (read < 0)
                 return read;
-            if (read == 0)
-                break;
 
             lzma->lstream.next_in = lzma->buffer;
             lzma->lstream.avail_in = (size_t)read;
