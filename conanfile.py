@@ -8,7 +8,7 @@ import os
 
 class minizipConan(ConanFile):
     name = "minizip"
-    version = "2.8.9"
+    version = "2.9.2"
     license = "ZLIB http://www.zlib.net/zlib_license.html"
     description = "minizip is a zip manipulation library written in C that is supported on Windows, macOS, and Linux."
     url = "https://github.com/odant/conan-minizip"
