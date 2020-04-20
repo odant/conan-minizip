@@ -1,8 +1,8 @@
 /* mz_os_win32.c -- System functions for Windows
-   Version 2.8.9, July 4, 2019
+   Version 2.9.2, February 12, 2020
    part of the MiniZip project
 
-   Copyright (C) 2010-2019 Nathan Moinvaziri
+   Copyright (C) 2010-2020 Nathan Moinvaziri
      https://github.com/nmoinvaz/minizip
 
    This program is distributed under the terms of the same license as zlib.
@@ -22,6 +22,10 @@
 #  if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #    define MZ_WINRT_API 1
 #  endif
+#endif
+
+#ifndef SYMBOLIC_LINK_FLAG_DIRECTORY
+#  define SYMBOLIC_LINK_FLAG_DIRECTORY 0x1
 #endif
 
 /***************************************************************************/
@@ -520,10 +524,9 @@ int32_t mz_os_make_symlink(const char *path, const char *target_path)
 {
     typedef BOOLEAN (WINAPI *LPCREATESYMBOLICLINKW)(LPCWSTR, LPCWSTR, DWORD);
     LPCREATESYMBOLICLINKW create_symbolic_link_w = NULL;
-    HMODULE kernel32_mod = 0;
+    HMODULE kernel32_mod = NULL;
     wchar_t *path_wide = NULL;
     wchar_t *target_path_wide = NULL;
-    wchar_t kernel32_path[320];
     uint32_t attribs = 0;
     int32_t target_path_len = 0;
     int32_t err = MZ_OK;
@@ -532,24 +535,19 @@ int32_t mz_os_make_symlink(const char *path, const char *target_path)
     if (path == NULL)
         return MZ_PARAM_ERROR;
 
-    if (GetSystemDirectoryW(kernel32_path, sizeof(kernel32_path)) == 0)
-        return MZ_SUPPORT_ERROR;
-    wcsncat(kernel32_path, L"\\kernel32.dll", sizeof(kernel32_path));
-    kernel32_mod = LoadLibraryW(kernel32_path);
+    kernel32_mod = GetModuleHandleW(L"kernel32.dll");
     if (kernel32_mod == NULL)
         return MZ_SUPPORT_ERROR;
 
     create_symbolic_link_w = (LPCREATESYMBOLICLINKW)GetProcAddress(kernel32_mod, "CreateSymbolicLinkW");
     if (create_symbolic_link_w == NULL)
     {
-        FreeLibrary(kernel32_mod);
         return MZ_SUPPORT_ERROR;
     }
 
     path_wide = mz_os_unicode_string_create(path, MZ_ENCODING_UTF8);
     if (path_wide == NULL)
     {
-        FreeLibrary(kernel32_mod);
         return MZ_PARAM_ERROR;
     }
 
@@ -570,7 +568,6 @@ int32_t mz_os_make_symlink(const char *path, const char *target_path)
     }
 
     mz_os_unicode_string_delete(&path_wide);
-    FreeLibrary(kernel32_mod);
 
     return err;
 }
@@ -603,12 +600,12 @@ int32_t mz_os_read_symlink(const char *path, char *target_path, int32_t max_targ
         };
     } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
     REPARSE_DATA_BUFFER *reparse_data = NULL;
+    DWORD length = 0;
     HANDLE handle = NULL;
     wchar_t *path_wide = NULL;
     wchar_t *target_path_wide = NULL;
     uint32_t attribs = 0;
     uint8_t buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
-    int32_t length = 0;
     int32_t target_path_len = 0;
     int32_t target_path_idx = 0;
     int32_t err = MZ_OK;
@@ -651,10 +648,10 @@ int32_t mz_os_read_symlink(const char *path, char *target_path, int32_t max_targ
 
                 if (target_path_utf8)
                 {
-                    strncpy(target_path, target_path_utf8, max_target_path - 1);
+                    strncpy(target_path, (const char *)target_path_utf8, max_target_path - 1);
                     target_path[max_target_path - 1] = 0;
                     /* Ensure directories have slash at the end so we can recreate them later */
-                    if (mz_os_is_dir(target_path_utf8) == MZ_OK)
+                    if (mz_os_is_dir((const char *)target_path_utf8) == MZ_OK)
                         mz_path_append_slash(target_path, max_target_path, MZ_PATH_SLASH_PLATFORM);
                     mz_os_utf8_string_delete(&target_path_utf8);
                 }

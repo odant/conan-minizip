@@ -1,8 +1,8 @@
 /* mz_zip_rw.c -- Zip reader/writer
-   Version 2.8.9, July 4, 2019
+   Version 2.9.2, February 12, 2020
    part of the MiniZip project
 
-   Copyright (C) 2010-2019 Nathan Moinvaziri
+   Copyright (C) 2010-2020 Nathan Moinvaziri
      https://github.com/nmoinvaz/minizip
 
    This program is distributed under the terms of the same license as zlib.
@@ -421,7 +421,7 @@ int32_t mz_zip_reader_entry_open(void *handle)
 
         if (err == MZ_OK)
             mz_crypt_sha_begin(reader->hash);
-#ifndef MZ_ZIP_NO_SIGNING
+#ifdef MZ_ZIP_SIGNING
         if (err == MZ_OK)
         {
             if (mz_zip_reader_entry_has_sign(handle) == MZ_OK)
@@ -498,7 +498,7 @@ int32_t mz_zip_reader_entry_has_sign(void *handle)
         reader->file_info->extrafield_size, MZ_ZIP_EXTENSION_SIGN, NULL);
 }
 
-#if !defined(MZ_ZIP_NO_ENCRYPTION) && !defined(MZ_ZIP_NO_SIGNING)
+#if !defined(MZ_ZIP_NO_ENCRYPTION) && defined(MZ_ZIP_SIGNING)
 int32_t mz_zip_reader_entry_sign_verify(void *handle)
 {
     mz_zip_reader *reader = (mz_zip_reader *)handle;
@@ -844,7 +844,7 @@ int32_t mz_zip_reader_entry_save_buffer(void *handle, void *buf, int32_t len)
     if (reader->file_info->uncompressed_size > INT32_MAX)
         return MZ_PARAM_ERROR;
     if (len != (int32_t)reader->file_info->uncompressed_size)
-        return MZ_PARAM_ERROR;
+        return MZ_BUF_ERROR;
 
     /* Create a memory stream backed by our buffer and save to it */
     mz_stream_mem_create(&mem_stream);
@@ -1108,6 +1108,66 @@ typedef struct mz_zip_writer_s {
 
 /***************************************************************************/
 
+int32_t mz_zip_writer_zip_cd(void *handle)
+{
+    mz_zip_writer *writer = (mz_zip_writer *)handle;
+    mz_zip_file cd_file;
+    uint64_t number_entry = 0;
+    int64_t cd_mem_length = 0;
+    int32_t err = MZ_OK;
+    int32_t extrafield_size = 0;
+    void *file_extra_stream = NULL;
+    void *cd_mem_stream = NULL;
+
+
+    memset(&cd_file, 0, sizeof(cd_file));
+
+    mz_zip_get_number_entry(writer->zip_handle, &number_entry);
+    mz_zip_get_cd_mem_stream(writer->zip_handle, &cd_mem_stream);
+    mz_stream_seek(cd_mem_stream, 0, MZ_SEEK_END);
+    cd_mem_length = (uint32_t)mz_stream_tell(cd_mem_stream);
+    mz_stream_seek(cd_mem_stream, 0, MZ_SEEK_SET);
+
+    cd_file.filename = MZ_ZIP_CD_FILENAME;
+    cd_file.modified_date = time(NULL);
+    cd_file.version_madeby = MZ_VERSION_MADEBY;
+    cd_file.compression_method = writer->compress_method;
+    cd_file.uncompressed_size = (int32_t)cd_mem_length;
+    cd_file.flag = MZ_ZIP_FLAG_UTF8;
+
+    if (writer->password != NULL)
+        cd_file.flag |= MZ_ZIP_FLAG_ENCRYPTED;
+
+    mz_stream_mem_create(&file_extra_stream);
+    mz_stream_mem_open(file_extra_stream, NULL, MZ_OPEN_MODE_CREATE);
+
+    mz_zip_extrafield_write(file_extra_stream, MZ_ZIP_EXTENSION_CDCD, 8);
+
+    mz_stream_write_uint64(file_extra_stream, number_entry);
+
+    mz_stream_mem_get_buffer(file_extra_stream, (const void **)&cd_file.extrafield);
+    mz_stream_mem_get_buffer_length(file_extra_stream, &extrafield_size);
+    cd_file.extrafield_size = (uint16_t)extrafield_size;
+
+    err = mz_zip_writer_entry_open(handle, &cd_file);
+    if (err == MZ_OK)
+    {
+        mz_stream_copy_stream(handle, mz_zip_writer_entry_write, cd_mem_stream,
+            NULL, (int32_t)cd_mem_length);
+
+        mz_stream_seek(cd_mem_stream, 0, MZ_SEEK_SET);
+        mz_stream_mem_set_buffer_limit(cd_mem_stream, 0);
+
+        err = mz_zip_writer_entry_close(writer);
+    }
+
+    mz_stream_mem_delete(&file_extra_stream);
+
+    return err;
+}
+
+/***************************************************************************/
+
 int32_t mz_zip_writer_is_open(void *handle)
 {
     mz_zip_writer *writer = (mz_zip_writer *)handle;
@@ -1291,66 +1351,6 @@ int32_t mz_zip_writer_close(void *handle)
 
 /***************************************************************************/
 
-int32_t mz_zip_writer_zip_cd(void *handle)
-{
-    mz_zip_writer *writer = (mz_zip_writer *)handle;
-    mz_zip_file cd_file;
-    uint64_t number_entry = 0;
-    int64_t cd_mem_length = 0;
-    int32_t err = MZ_OK;
-    int32_t extrafield_size = 0;
-    void *file_extra_stream = NULL;
-    void *cd_mem_stream = NULL;
-
-
-    memset(&cd_file, 0, sizeof(cd_file));
-
-    mz_zip_get_number_entry(writer->zip_handle, &number_entry);
-    mz_zip_get_cd_mem_stream(writer->zip_handle, &cd_mem_stream);
-    mz_stream_seek(cd_mem_stream, 0, MZ_SEEK_END);
-    cd_mem_length = (uint32_t)mz_stream_tell(cd_mem_stream);
-    mz_stream_seek(cd_mem_stream, 0, MZ_SEEK_SET);
-
-    cd_file.filename = MZ_ZIP_CD_FILENAME;
-    cd_file.modified_date = time(NULL);
-    cd_file.version_madeby = MZ_VERSION_MADEBY;
-    cd_file.compression_method = writer->compress_method;
-    cd_file.uncompressed_size = (int32_t)cd_mem_length;
-    cd_file.flag = MZ_ZIP_FLAG_UTF8;
-
-    if (writer->password != NULL)
-        cd_file.flag |= MZ_ZIP_FLAG_ENCRYPTED;
-
-    mz_stream_mem_create(&file_extra_stream);
-    mz_stream_mem_open(file_extra_stream, NULL, MZ_OPEN_MODE_CREATE);
-
-    mz_zip_extrafield_write(file_extra_stream, MZ_ZIP_EXTENSION_CDCD, 8);
-
-    mz_stream_write_uint64(file_extra_stream, number_entry);
-
-    mz_stream_mem_get_buffer(file_extra_stream, (const void **)&cd_file.extrafield);
-    mz_stream_mem_get_buffer_length(file_extra_stream, &extrafield_size);
-    cd_file.extrafield_size = (uint16_t)extrafield_size;
-
-    err = mz_zip_writer_entry_open(handle, &cd_file);
-    if (err == MZ_OK)
-    {
-        mz_stream_copy_stream(handle, mz_zip_writer_entry_write, cd_mem_stream,
-            NULL, (int32_t)cd_mem_length);
-
-        mz_stream_seek(cd_mem_stream, 0, MZ_SEEK_SET);
-        mz_stream_mem_set_buffer_limit(cd_mem_stream, 0);
-
-        err = mz_zip_writer_entry_close(writer);
-    }
-
-    mz_stream_mem_delete(&file_extra_stream);
-
-    return err;
-}
-
-/***************************************************************************/
-
 int32_t mz_zip_writer_entry_open(void *handle, mz_zip_file *file_info)
 {
     mz_zip_writer *writer = (mz_zip_writer *)handle;
@@ -1392,88 +1392,8 @@ int32_t mz_zip_writer_entry_open(void *handle, mz_zip_file *file_info)
     return err;
 }
 
-int32_t mz_zip_writer_entry_close(void *handle)
-{
-    mz_zip_writer *writer = (mz_zip_writer *)handle;
-    int32_t err = MZ_OK;
-#ifndef MZ_ZIP_NO_ENCRYPTION
-    const uint8_t *extrafield = NULL;
-    int32_t extrafield_size = 0;
-    int16_t field_length_hash = 0;
-    uint8_t sha256[MZ_HASH_SHA256_SIZE];
 
-
-    if (writer->sha256 != NULL)
-    {
-        mz_crypt_sha_end(writer->sha256, sha256, sizeof(sha256));
-        mz_crypt_sha_delete(&writer->sha256);
-
-        /* Copy extrafield so we can append our own fields before close */
-        mz_stream_mem_create(&writer->file_extra_stream);
-        mz_stream_mem_open(writer->file_extra_stream, NULL, MZ_OPEN_MODE_CREATE);
-
-        /* Write sha256 hash to extrafield */
-        field_length_hash = 4 + MZ_HASH_SHA256_SIZE;
-        err = mz_zip_extrafield_write(writer->file_extra_stream, MZ_ZIP_EXTENSION_HASH, field_length_hash);
-        if (err == MZ_OK)
-            err = mz_stream_write_uint16(writer->file_extra_stream, MZ_HASH_SHA256);
-        if (err == MZ_OK)
-            err = mz_stream_write_uint16(writer->file_extra_stream, MZ_HASH_SHA256_SIZE);
-        if (err == MZ_OK)
-        {
-            if (mz_stream_write(writer->file_extra_stream, sha256, sizeof(sha256)) != MZ_HASH_SHA256_SIZE)
-                err = MZ_WRITE_ERROR;
-        }
-
-#ifndef MZ_ZIP_NO_SIGNING
-        if ((err == MZ_OK) && (writer->cert_data != NULL) && (writer->cert_data_size > 0))
-        {
-            /* Sign entry if not zipping cd or if it is cd being zipped */
-            if (!writer->zip_cd || strcmp(writer->file_info.filename, MZ_ZIP_CD_FILENAME) == 0)
-            {
-                err = mz_zip_writer_entry_sign(handle, sha256, sizeof(sha256),
-                    writer->cert_data, writer->cert_data_size, writer->cert_pwd);
-            }
-        }
-#endif
-
-        if ((writer->file_info.extrafield != NULL) && (writer->file_info.extrafield_size > 0))
-            mz_stream_mem_write(writer->file_extra_stream, writer->file_info.extrafield,
-                writer->file_info.extrafield_size);
-
-        /* Update extra field for central directory after adding extra fields */
-        mz_stream_mem_get_buffer(writer->file_extra_stream, (const void **)&extrafield);
-        mz_stream_mem_get_buffer_length(writer->file_extra_stream, &extrafield_size);
-
-        mz_zip_entry_set_extrafield(writer->zip_handle, extrafield, (uint16_t)extrafield_size);
-    }
-#endif
-
-    if (err == MZ_OK)
-    {
-        if (writer->raw)
-            err = mz_zip_entry_close_raw(writer->zip_handle, writer->file_info.uncompressed_size,
-                writer->file_info.crc);
-        else
-            err = mz_zip_entry_close(writer->zip_handle);
-    }
-
-    return err;
-}
-
-int32_t mz_zip_writer_entry_write(void *handle, const void *buf, int32_t len)
-{
-    mz_zip_writer *writer = (mz_zip_writer *)handle;
-    int32_t written = 0;
-    written = mz_zip_entry_write(writer->zip_handle, buf, len);
-#ifndef MZ_ZIP_NO_ENCRYPTION
-    if ((written > 0) && (writer->sha256 != NULL))
-        mz_crypt_sha_update(writer->sha256, buf, written);
-#endif
-    return written;
-}
-
-#if !defined(MZ_ZIP_NO_ENCRYPTION) && !defined(MZ_ZIP_NO_SIGNING)
+#if !defined(MZ_ZIP_NO_ENCRYPTION) && defined(MZ_ZIP_SIGNING)
 int32_t mz_zip_writer_entry_sign(void *handle, uint8_t *message, int32_t message_size,
     uint8_t *cert_data, int32_t cert_data_size, const char *cert_pwd)
 {
@@ -1511,6 +1431,89 @@ int32_t mz_zip_writer_entry_sign(void *handle, uint8_t *message, int32_t message
 }
 #endif
 
+int32_t mz_zip_writer_entry_close(void *handle)
+{
+    mz_zip_writer *writer = (mz_zip_writer *)handle;
+    int32_t err = MZ_OK;
+#ifndef MZ_ZIP_NO_ENCRYPTION
+    const uint8_t *extrafield = NULL;
+    int32_t extrafield_size = 0;
+    int16_t field_length_hash = 0;
+    uint8_t sha256[MZ_HASH_SHA256_SIZE];
+
+
+    if (writer->sha256 != NULL)
+    {
+        mz_crypt_sha_end(writer->sha256, sha256, sizeof(sha256));
+        mz_crypt_sha_delete(&writer->sha256);
+
+        /* Copy extrafield so we can append our own fields before close */
+        mz_stream_mem_create(&writer->file_extra_stream);
+        mz_stream_mem_open(writer->file_extra_stream, NULL, MZ_OPEN_MODE_CREATE);
+
+        /* Write sha256 hash to extrafield */
+        field_length_hash = 4 + MZ_HASH_SHA256_SIZE;
+        err = mz_zip_extrafield_write(writer->file_extra_stream, MZ_ZIP_EXTENSION_HASH, field_length_hash);
+        if (err == MZ_OK)
+            err = mz_stream_write_uint16(writer->file_extra_stream, MZ_HASH_SHA256);
+        if (err == MZ_OK)
+            err = mz_stream_write_uint16(writer->file_extra_stream, MZ_HASH_SHA256_SIZE);
+        if (err == MZ_OK)
+        {
+            if (mz_stream_write(writer->file_extra_stream, sha256, sizeof(sha256)) != MZ_HASH_SHA256_SIZE)
+                err = MZ_WRITE_ERROR;
+        }
+
+#ifdef MZ_ZIP_SIGNING
+        if ((err == MZ_OK) && (writer->cert_data != NULL) && (writer->cert_data_size > 0))
+        {
+            /* Sign entry if not zipping cd or if it is cd being zipped */
+            if (!writer->zip_cd || strcmp(writer->file_info.filename, MZ_ZIP_CD_FILENAME) == 0)
+            {
+                err = mz_zip_writer_entry_sign(handle, sha256, sizeof(sha256),
+                    writer->cert_data, writer->cert_data_size, writer->cert_pwd);
+            }
+        }
+#endif
+
+        if ((writer->file_info.extrafield != NULL) && (writer->file_info.extrafield_size > 0))
+            mz_stream_mem_write(writer->file_extra_stream, writer->file_info.extrafield,
+                writer->file_info.extrafield_size);
+
+        /* Update extra field for central directory after adding extra fields */
+        mz_stream_mem_get_buffer(writer->file_extra_stream, (const void **)&extrafield);
+        mz_stream_mem_get_buffer_length(writer->file_extra_stream, &extrafield_size);
+
+        mz_zip_entry_set_extrafield(writer->zip_handle, extrafield, (uint16_t)extrafield_size);
+    }
+#endif
+
+    if (err == MZ_OK)
+    {
+        if (writer->raw)
+            err = mz_zip_entry_close_raw(writer->zip_handle, writer->file_info.uncompressed_size,
+                writer->file_info.crc);
+        else
+            err = mz_zip_entry_close(writer->zip_handle);
+    }
+
+    if (writer->file_extra_stream != NULL)
+        mz_stream_mem_delete(&writer->file_extra_stream);
+
+    return err;
+}
+
+int32_t mz_zip_writer_entry_write(void *handle, const void *buf, int32_t len)
+{
+    mz_zip_writer *writer = (mz_zip_writer *)handle;
+    int32_t written = 0;
+    written = mz_zip_entry_write(writer->zip_handle, buf, len);
+#ifndef MZ_ZIP_NO_ENCRYPTION
+    if ((written > 0) && (writer->sha256 != NULL))
+        mz_crypt_sha_update(writer->sha256, buf, written);
+#endif
+    return written;
+}
 /***************************************************************************/
 
 int32_t mz_zip_writer_add_process(void *handle, void *stream, mz_stream_read_cb read_cb)
@@ -1867,7 +1870,7 @@ int32_t mz_zip_writer_copy_from_reader(void *handle, void *reader)
             err = mz_zip_writer_add(writer, reader_zip_handle, mz_zip_entry_read);
         }
 
-        if ((err == MZ_OK) && (file_info->flag & MZ_ZIP_FLAG_DATA_DESCRIPTOR))
+        if (err == MZ_OK)
         {
             err = mz_zip_entry_read_close(reader_zip_handle, &crc32, &compressed_size, &uncompressed_size);
             if (err == MZ_OK)
