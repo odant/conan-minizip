@@ -1,11 +1,12 @@
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 0a369fc..49052e7 100644
+index 6152b820..a655138d 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -287,28 +287,8 @@ if(UNIX)
+@@ -298,30 +298,6 @@ if(UNIX)
+                 list(APPEND MINIZIP_DEF -DHAVE_ARC4RANDOM)
              endif()
          endif()
- 
+-
 -        if(NOT HAVE_ARC4RANDOM_BUF)
 -            find_package(PkgConfig REQUIRED)
 -
@@ -14,20 +15,21 @@ index 0a369fc..49052e7 100644
 -                check_library_exists("${LIBBSD_LIBRARIES}" "arc4random_buf"
 -                    "${LIBBSD_LIBRARY_DIRS}" HAVE_LIBBSD_ARC4RANDOM_BUF)
 -                if (HAVE_LIBBSD_ARC4RANDOM_BUF)
--                    add_definitions(-DHAVE_LIBBSD)
--                    add_definitions(-DHAVE_ARC4RANDOM_BUF)
--                    include_directories(${LIBBSD_INCLUDE_DIRS})
+-                    list(APPEND MINIZIP_DEF -DHAVE_LIBBSD)
+-                    list(APPEND MINIZIP_DEF -DHAVE_ARC4RANDOM_BUF)
+-                    list(APPEND MINIZIP_INC ${LIBBSD_INCLUDE_DIRS})
 -                    link_directories(${LIBBSD_LIBRARY_DIRS})
 -                endif()
 -            endif()
 -        endif()
-     endif()
- 
+-    endif()
+-
+-    # Iconv is only necessary when it is not already built-in
+-    # FindIconv requires cmake 3.11 or higher
 -    find_package(Iconv QUIET)
 -    if (Iconv_FOUND)
 -        message(STATUS "Using Iconv")
--        include_directories(${Iconv_INCLUDE_DIRS})
--    endif()
+-        list(APPEND MINIZIP_INC ${Iconv_INCLUDE_DIRS})
+     endif()
  endif()
  
- # Include compatibility layer
