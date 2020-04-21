@@ -19,9 +19,13 @@ class minizipConan(ConanFile):
         "arch": ["x86", "x86_64", "mips"]
     }
     options = {
-        "with_unit_tests": [True, False]
+        "with_unit_tests": [True, False],
+        "ninja": [True, False]
     }
-    default_options = "with_unit_tests=False"
+    default_options = {
+        "with_unit_tests": False,
+        "ninja": True
+    }
     generators = "cmake"
     exports_sources = "src/*", "CMakeLists.txt", "Findminizip.cmake", "remove_libbsd_iconv.patch"
     no_copy_source = True
@@ -34,12 +38,17 @@ class minizipConan(ConanFile):
     def requirements(self):
         self.requires("zlib/1.2.11@%s/stable" % self.user)
 
+    def build_requiments(self):
+        if self.options.ninja:
+            self.build_requires("ninja_installer/1.9.0@bincrafters/stable")
+
     def source(self):
         tools.patch(patch_file="remove_libbsd_iconv.patch")
 
     def build(self):
         build_type = "RelWithDebInfo" if self.settings.build_type == "Release" else "Debug"
-        cmake = CMake(self, build_type=build_type, msbuild_verbosity='normal')
+        gen = "Ninja" if self.options.ninja == True else None
+        cmake = CMake(self, build_type=build_type, generator=gen, msbuild_verbosity='normal')
         cmake.verbose = True
         cmake.definitions["BUILD_SHARED_LIBS:BOOL"] = "OFF"
         #
@@ -68,6 +77,7 @@ class minizipConan(ConanFile):
 
     def package_id(self):
         self.info.options.with_unit_tests = "any"
+        self.info.options.ninja = "any"
 
     def package_info(self):
         self.cpp_info.libs = ["minizip"]
