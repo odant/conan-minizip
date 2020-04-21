@@ -10,14 +10,14 @@ class PackageTestConan(ConanFile):
     generators = "cmake"
 
     def build_requiments(self):
-        if self.options["docopt"].ninja:
+        if self.options["minizip"].ninja:
             self.build_requires("ninja_installer/1.9.0@bincrafters/stable")
 
     def imports(self):
         self.copy("*.pdb", dst="bin", src="bin")
 
     def build(self):
-        gen = "Ninja" if self.options["docopt"].ninja else None
+        gen = "Ninja" if self.options["minizip"].ninja else None
         cmake = CMake(self, generator=gen, msbuild_verbosity='normal')
         cmake.verbose = True
         cmake.configure()
