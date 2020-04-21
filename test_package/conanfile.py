@@ -2,7 +2,7 @@
 # Dmitriy Vetutnev, Odant 2019 - 2020
 
 
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, CMake
 
 
 class PackageTestConan(ConanFile):
